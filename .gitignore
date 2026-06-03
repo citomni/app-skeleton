@@ -1,0 +1,57 @@
+# CitOmni application skeleton ignore rules
+#
+# This file keeps local dependencies, runtime data, generated files, secrets,
+# uploads, and machine-local folders out of Git.
+#
+# Notes:
+# - Root folders starting with "_" are treated as local/private workspace folders.
+# - Runtime directories are kept in the skeleton through .gitkeep files.
+# - Lock files are not ignored here. Real applications should usually commit
+#   composer.lock for deterministic installs.
+
+# Root-local/private folders
+/_*/
+
+# Composer dependencies
+/vendor/
+
+# Composer local auth
+/auth.json
+
+# Node dependencies
+/node_modules/
+
+# Runtime var content
+/var/cache/*
+!/var/cache/.gitkeep
+
+/var/flags/*
+!/var/flags/.gitkeep
+
+/var/logs/*
+!/var/logs/.gitkeep
+
+/var/nonces/*
+!/var/nonces/.gitkeep
+
+/var/secrets/*
+!/var/secrets/.gitkeep
+
+/var/state/*
+!/var/state/.gitkeep
+
+# Runtime backups
+/var/backups/*
+!/var/backups/.gitkeep
+!/var/backups/flags/
+
+/var/backups/flags/*
+!/var/backups/flags/.gitkeep
+
+# Public uploads
+/public/uploads/u/*
+!/public/uploads/u/.gitkeep
+
+# Local backup folders and files
+**/_backups/
+*.bck

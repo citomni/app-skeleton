@@ -1,0 +1,61 @@
+{
+	"name": "citomni/app-skeleton",
+	"description": "Neutral application skeleton for CitOmni. Provides the app container, core wiring points, and installer lifecycle tooling without assuming HTTP or CLI mode.",
+	"type": "project",
+	"license": "MIT",
+	"keywords": [
+		"citomni",
+		"skeleton",
+		"app-skeleton",
+		"framework",
+		"php8",
+		"php-framework",
+		"lightweight",
+		"lightweight-framework",
+		"scaffold",
+		"installer",
+		"php"
+	],
+	"homepage": "https://www.citomni.com",
+	"support": {
+		"issues": "https://github.com/citomni/app-skeleton/issues",
+		"source": "https://github.com/citomni/app-skeleton"
+	},
+	"require": {
+		"php": "^8.2",
+		"citomni/kernel": "*@dev",
+		"citomni/installer": "*@dev"
+	},
+	"suggest": {
+		"citomni/http": "Add HTTP mode for web apps, APIs, intranets, and SaaS applications.",
+		"citomni/cli": "Add CLI mode for console commands, jobs, cron tasks, and developer tooling.",
+		"citomni/infrastructure": "Add lean infrastructure services such as db, log, txt, mailer, and formatting helpers."
+	},
+	"autoload": {
+		"psr-4": {
+			"App\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"App\\Tests\\": "tests/"
+		}
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"sort-packages": true
+	},
+	"minimum-stability": "stable",
+	"prefer-stable": true,
+	"scripts": {
+		"citomni:doctor": "vendor/bin/citomni-installer doctor",
+		"citomni:status": "vendor/bin/citomni-installer status",
+		"citomni:install": "vendor/bin/citomni-installer install",
+		"citomni:sync": "vendor/bin/citomni-installer sync",
+		"citomni:repair": "vendor/bin/citomni-installer repair",
+		"citomni:diff": "vendor/bin/citomni-installer diff",
+		"citomni:install:http": "vendor/bin/citomni-installer install --package=citomni/http",
+		"citomni:install:cli": "vendor/bin/citomni-installer install --package=citomni/cli"
+	}
+}
