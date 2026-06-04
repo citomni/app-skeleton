@@ -23,8 +23,8 @@
 	},
 	"require": {
 		"php": "^8.2",
-		"citomni/kernel": "*@dev",
-		"citomni/installer": "*@dev"
+		"citomni/kernel": "^1.0",
+		"citomni/installer": "^1.0"
 	},
 	"suggest": {
 		"citomni/http": "Add HTTP mode for web apps, APIs, intranets, and SaaS applications.",
