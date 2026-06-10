@@ -2,7 +2,7 @@
 
 Neutral application skeleton for CitOmni.
 
-`citomni/app-skeleton` is the mode-neutral starting point for CitOmni applications. It provides the application container, app-owned root files, neutral source-layer folders, baseline config entry points, runtime state folders, defensive `.htaccess` files, and installer lifecycle tooling.
+`citomni/app-skeleton` is the mode-neutral starting point for CitOmni applications. It provides the application container, app-owned root files, neutral source-layer folders, common config entry points, runtime state folders, defensive `.htaccess` files, and installer lifecycle tooling.
 
 It does **not** assume that the application is an HTTP app, a CLI app, or both. HTTP and CLI support are added explicitly through `citomni/http` and `citomni/cli`.
 
@@ -16,7 +16,7 @@ Lean, deterministic, and pleasantly boring where boring is a feature.
 - **No HTTP assumption** by default: No `public/`, no `templates/`, no HTTP routes, and no web front controller until `citomni/http` is installed.
 - **No CLI assumption** by default: No `bin/citomni` launcher until `citomni/cli` is installed.
 - **Installer-ready lifecycle model** through `citomni/installer`.
-- **App-owned config entry points** for providers, local services, and installer placeholders.
+- **App-owned common config entry points** for shared cfg, providers, and local services.
 - **Canonical source-layer folders** for operations, repositories, services, policies, state handlers, support classes, enums, utilities, and exceptions.
 - **Shared-hosting defense-in-depth** through deny rules in internal folders.
 - **Deterministic line endings** through `.gitattributes`.
@@ -57,8 +57,8 @@ That includes:
 
 - Root Composer project metadata.
 - PSR-4 application autoloading.
-- App-owned config entry files.
-- Installer placeholder config.
+- App-owned common configuration files.
+- Shared cfg, provider, and service entry points.
 - Neutral source-layer directories.
 - Language directories.
 - Runtime state directories under `var/`.
@@ -138,7 +138,14 @@ public/.htaccess
 public/assets/.gitkeep
 public/uploads/.htaccess
 config/citomni_http_cfg.php
+config/citomni_http_cfg.dev.php
+config/citomni_http_cfg.stage.php
+config/citomni_http_cfg.prod.php
 config/citomni_http_routes.php
+config/citomni_http_routes.dev.php
+config/citomni_http_routes.stage.php
+config/citomni_http_routes.prod.php
+config/services_http.php
 src/Http/Controller/AppController.php
 templates/.htaccess
 templates/public/.gitkeep
@@ -182,7 +189,14 @@ This materializes CLI-owned scaffold such as:
 ```text
 bin/citomni
 config/citomni_cli_cfg.php
+config/citomni_cli_cfg.dev.php
+config/citomni_cli_cfg.stage.php
+config/citomni_cli_cfg.prod.php
 config/citomni_cli_commands.php
+config/citomni_cli_commands.dev.php
+config/citomni_cli_commands.stage.php
+config/citomni_cli_commands.prod.php
+config/services_cli.php
 src/Cli/Command/HelloCommand.php
 ```
 
@@ -200,7 +214,7 @@ composer citomni:install:http
 composer citomni:install:cli
 ```
 
-HTTP and CLI share the same app root, config folder, providers, services, source layers, language files, and runtime state folders.
+HTTP and CLI share the same app root, config folder, common cfg, providers, common services, source layers, language files, and runtime state folders.
 
 The mode-specific adapters stay separate:
 
@@ -238,7 +252,10 @@ A fresh `citomni/app-skeleton` project contains only the neutral app structure:
 
 	/config
 		/.htaccess
-		/citomni_installer.php
+		/citomni_cfg.php
+		/citomni_cfg.dev.php
+		/citomni_cfg.stage.php
+		/citomni_cfg.prod.php
 		/CONFIGURATION.md
 		/providers.php
 		/services.php
@@ -309,6 +326,33 @@ Mode-specific folders such as `public/`, `templates/`, `src/Http/`, and `src/Cli
 
 ## Configuration files
 
+The neutral skeleton provides the common app-level config entry points. Runtime packages may add mode-specific overlays when HTTP or CLI support is installed.
+
+For the detailed merge contract, see [`config/CONFIGURATION.md`](config/CONFIGURATION.md).
+
+### `config/citomni_cfg.php`
+
+Defines application-owned common configuration shared by HTTP and CLI.
+
+```php
+<?php
+declare(strict_types=1);
+
+return [
+	'identity' => [
+		'app_name' => 'My App',
+	],
+];
+```
+
+This file is the stable app base. It should contain durable values that are not inherently HTTP-specific or CLI-specific.
+
+### `config/citomni_cfg.<env>.php`
+
+Defines optional common environment overlays, normally `dev`, `stage`, and `prod`.
+
+These files are loaded after `config/citomni_cfg.php` and before mode-specific environment overlays. They should express narrow environment differences, not duplicate the base file because future you already has enough to review.
+
 ### `config/providers.php`
 
 Lists provider package registries loaded by the application.
@@ -322,9 +366,11 @@ return [
 ];
 ```
 
+Provider order matters. Provider cfg is merged in the listed order, while provider service-map precedence is derived from the same order with app service maps still winning above provider and vendor definitions.
+
 ### `config/services.php`
 
-Defines app-local service map entries and overrides.
+Defines app-local service map entries and common overrides.
 
 ```php
 <?php
@@ -335,26 +381,67 @@ return [
 ];
 ```
 
-### `config/citomni_installer.php`
+`services.php` is shared by HTTP and CLI. A service definition placed here should therefore be safe for both modes, or intentionally override a common service contract.
 
-Stores app-owned placeholder values used by `citomni/installer` when package scaffold is rendered.
+### Mode-specific cfg files
 
-```php
-<?php
-declare(strict_types=1);
+HTTP mode may add:
 
-return [
-	'placeholders' => [
-		'APP_NAMESPACE' => 'App',
-		'APP_NAME' => 'My App',
-		'CITOMNI_ENVIRONMENT' => 'dev',
-	],
-];
+```text
+config/citomni_http_cfg.php
+config/citomni_http_cfg.dev.php
+config/citomni_http_cfg.stage.php
+config/citomni_http_cfg.prod.php
 ```
 
-For detailed placeholder behavior, see the [CitOmni Installer README](https://github.com/citomni/installer/blob/main/README.md).
+CLI mode may add:
 
----
+```text
+config/citomni_cli_cfg.php
+config/citomni_cli_cfg.dev.php
+config/citomni_cli_cfg.stage.php
+config/citomni_cli_cfg.prod.php
+```
+
+Mode-specific cfg files override common cfg for their mode. Environment overlays override the matching base files.
+
+### Mode-specific service files
+
+HTTP mode may add:
+
+```text
+config/services_http.php
+```
+
+CLI mode may add:
+
+```text
+config/services_cli.php
+```
+
+Service maps use PHP array union semantics. First matching service ID wins. In practice, app mode-specific service maps have the highest precedence, followed by app common services, then provider maps, then the selected vendor mode baseline.
+
+### Dispatch files
+
+HTTP routes remain HTTP-specific:
+
+```text
+config/citomni_http_routes.php
+config/citomni_http_routes.dev.php
+config/citomni_http_routes.stage.php
+config/citomni_http_routes.prod.php
+```
+
+CLI commands remain CLI-specific:
+
+```text
+config/citomni_cli_commands.php
+config/citomni_cli_commands.dev.php
+config/citomni_cli_commands.stage.php
+config/citomni_cli_commands.prod.php
+```
+
+There is no common route map and no common command map. Shared orchestration belongs in operations, repositories, services, policies, or other shared source layers, not in shared dispatch files.
 
 ## Source-layer model
 
@@ -383,6 +470,9 @@ CitOmni packages own the scaffold they require.
 ```text
 citomni/app-skeleton
 	Owns the neutral app container.
+
+citomni/kernel
+	Owns common config scaffold such as citomni_cfg.php, services.php, and providers.php.
 
 citomni/http
 	Owns HTTP runtime and HTTP scaffold.
