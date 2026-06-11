@@ -48,6 +48,10 @@
 /var/backups/flags/*
 !/var/backups/flags/.gitkeep
 
+# Public assets
+#/public/assets/*
+#!/public/assets/.gitkeep
+
 # Public uploads
 /public/uploads/u/*
 !/public/uploads/u/.gitkeep
