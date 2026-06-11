@@ -49,6 +49,12 @@
 	"minimum-stability": "stable",
 	"prefer-stable": true,
 	"scripts": {
+		"post-install-cmd": [
+			"@composer dump-autoload -a"
+		],
+		"post-update-cmd": [
+			"@composer dump-autoload -a"
+		],
 		"citomni:doctor": "vendor/bin/citomni-installer doctor",
 		"citomni:status": "vendor/bin/citomni-installer status",
 		"citomni:install": "vendor/bin/citomni-installer install",
