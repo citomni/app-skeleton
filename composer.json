@@ -22,7 +22,7 @@
 		"source": "https://github.com/citomni/app-skeleton"
 	},
 	"require": {
-		"php": "^8.2",
+		"php": "^8.5",
 		"citomni/kernel": "^1.0",
 		"citomni/installer": "^1.0"
 	},
