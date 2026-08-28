@@ -4,17 +4,19 @@
 	"type": "project",
 	"license": "MIT",
 	"keywords": [
-		"citomni",
-		"skeleton",
 		"app-skeleton",
+		"application-template",
+		"citomni",
+		"citomni-framework",
+		"citomni-php",
+		"composer",
+		"create-project",
 		"framework",
-		"php8",
+		"php",
 		"php-framework",
-		"lightweight",
-		"lightweight-framework",
-		"scaffold",
-		"installer",
-		"php"
+		"skeleton",
+		"application-skeleton",
+		"lightweight-framework"
 	],
 	"homepage": "https://www.citomni.com",
 	"support": {
