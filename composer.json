@@ -45,25 +45,16 @@
 	},
 	"config": {
 		"optimize-autoloader": true,
-		"classmap-authoritative": true,
 		"sort-packages": true
 	},
 	"minimum-stability": "stable",
 	"prefer-stable": true,
 	"scripts": {
-		"post-install-cmd": [
-			"@composer dump-autoload -a"
-		],
-		"post-update-cmd": [
-			"@composer dump-autoload -a"
-		],
 		"citomni:doctor": "vendor/bin/citomni-installer doctor",
 		"citomni:status": "vendor/bin/citomni-installer status",
 		"citomni:install": "vendor/bin/citomni-installer install",
 		"citomni:sync": "vendor/bin/citomni-installer sync",
 		"citomni:repair": "vendor/bin/citomni-installer repair",
-		"citomni:diff": "vendor/bin/citomni-installer diff",
-		"citomni:install:http": "vendor/bin/citomni-installer install --package=citomni/http",
-		"citomni:install:cli": "vendor/bin/citomni-installer install --package=citomni/cli"
+		"citomni:diff": "vendor/bin/citomni-installer diff"
 	}
 }
