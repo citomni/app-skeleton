@@ -36,7 +36,6 @@
 
 /var/secrets/*
 !/var/secrets/.gitkeep
-!/var/secrets/app.secret.php.tpl
 !/var/secrets/webhooks.secret.php.tpl
 
 /var/state/*
