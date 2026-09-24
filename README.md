@@ -665,7 +665,7 @@ All CitOmni projects follow the shared conventions documented here:
 
 Core conventions:
 
-- PHP **8.2+**
+- PHP **8.5+**
 - PSR-1 and PSR-4
 - PascalCase classes
 - camelCase methods and variables
