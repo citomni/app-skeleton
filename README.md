@@ -93,7 +93,7 @@ No ceremonial `public/` directory for pure CLI apps. No `bin/citomni` launcher f
 
 ## Requirements
 
-- PHP **8.2+**
+- PHP **8.5+**
 - Composer
 - `citomni/kernel`
 - `citomni/installer`
