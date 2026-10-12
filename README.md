@@ -64,6 +64,7 @@ That includes:
 - Runtime state directories under `var/`.
 - Defensive `.htaccess` files for internal folders.
 - `.gitattributes` for deterministic line endings.
+- `.gitignore` defaults in a `citomni/app-skeleton` block, ahead of the block that `citomni/installer` maintains.
 - `citomni/installer` as lifecycle tooling.
 
 It gives the application a safe place to exist before any runtime mode is installed.
@@ -293,8 +294,6 @@ A fresh `citomni/app-skeleton` project contains only the neutral app structure:
 
 	/var
 		/backups
-			/flags
-				/.gitkeep
 			/.gitkeep
 		/cache
 			/.gitkeep
@@ -307,6 +306,8 @@ A fresh `citomni/app-skeleton` project contains only the neutral app structure:
 		/secrets
 			/.gitkeep
 		/state
+			/.gitkeep
+		/storage
 			/.gitkeep
 		/.htaccess
 
@@ -533,9 +534,26 @@ var/logs/
 var/nonces/
 var/secrets/
 var/state/
+var/storage/
 ```
 
+`var/storage/` holds private files such as user uploads that must not be served from `public/`. Treat it like `var/secrets/`.
+
 Production deployments should generally make application code read-only and allow writes only where the application deliberately needs runtime state.
+
+Runtime content stays out of Git; each directory keeps only its `.gitkeep`, so a fresh checkout has the directories. See [Git ignore rules](#git-ignore-rules).
+
+---
+
+## Git ignore rules
+
+The skeleton's `.gitignore` is the first of three tiers. Git uses the last matching pattern, so each tier takes precedence over the ones above it:
+
+1. The `citomni/app-skeleton` block at the top of the file: defaults for the runtime directories above, plus local conventions such as `/vendor/` and root folders starting with `_`. It belongs to the application after `composer create-project`; no tool rewrites it.
+2. The `citomni/installer` block, which `citomni/installer` inserts right after the skeleton block and rewrites on `install`, `sync` and `migrate`. It ignores the runtime paths of the installed packages and their package-managed scaffold targets such as `public/index.php`, while keeping the files the packages want versioned.
+3. Application rules at the end of the file. They take precedence over both blocks, for example to version a fixture below `var/state/`, or to ignore a storage directory that the application configured elsewhere.
+
+Edits inside the installer block are lost on the next run. `composer.lock` is not ignored: applications should commit it for deterministic installs. The [CitOmni Installer README](https://github.com/citomni/installer/blob/main/README.md#gitignore-block) describes how the installer block is generated.
 
 ---
 
