@@ -198,7 +198,6 @@ config/citomni_cli_commands.dev.php
 config/citomni_cli_commands.stage.php
 config/citomni_cli_commands.prod.php
 config/services_cli.php
-src/Cli/Command/HelloCommand.php
 ```
 
 For the full scaffold lifecycle manual, see the [CitOmni Installer README](https://github.com/citomni/installer/blob/main/README.md).
