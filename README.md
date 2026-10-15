@@ -2,7 +2,7 @@
 
 Neutral application skeleton for CitOmni.
 
-`citomni/app-skeleton` is the mode-neutral starting point for CitOmni applications. It provides the application container, app-owned root files, neutral source-layer folders, common config entry points, runtime state folders, defensive `.htaccess` files, and installer lifecycle tooling.
+`citomni/app-skeleton` is the mode-neutral starting point for CitOmni applications. It provides the application container, app-owned root files, neutral source-layer folders, runtime state folders, `.gitignore` defaults, and installer lifecycle tooling. The common config entry points come from `citomni/kernel` and the defensive `.htaccess` files from `citomni/http`; `citomni/installer` materializes both.
 
 It does **not** assume that the application is an HTTP app, a CLI app, or both. HTTP and CLI support are added explicitly through `citomni/http` and `citomni/cli`.
 
@@ -16,9 +16,9 @@ Lean, deterministic, and pleasantly boring where boring is a feature.
 - **No HTTP assumption** by default: No `public/`, no `templates/`, no HTTP routes, and no web front controller until `citomni/http` is installed.
 - **No CLI assumption** by default: No `bin/citomni` launcher until `citomni/cli` is installed.
 - **Installer-ready lifecycle model** through `citomni/installer`.
-- **App-owned common config entry points** for shared cfg, providers, and local services.
+- **App-owned common config entry points** for shared cfg, providers, and local services, created from `citomni/kernel` by the first install.
 - **Canonical source-layer folders** for operations, repositories, services, policies, state handlers, support classes, enums, utilities, and exceptions.
-- **Shared-hosting defense-in-depth** through deny rules in internal folders.
+- **Shared-hosting defense-in-depth** through deny rules in internal folders once `citomni/http` is installed.
 - **Deterministic line endings** through `.gitattributes`.
 
 ---
@@ -57,17 +57,17 @@ That includes:
 
 - Root Composer project metadata.
 - PSR-4 application autoloading.
-- App-owned common configuration files.
-- Shared cfg, provider, and service entry points.
+- Composer scripts for the installer commands.
 - Neutral source-layer directories.
 - Language directories.
 - Runtime state directories under `var/`.
-- Defensive `.htaccess` files for internal folders.
 - `.gitattributes` for deterministic line endings.
 - `.gitignore` defaults in a `citomni/app-skeleton` block, ahead of the block that `citomni/installer` maintains.
 - `citomni/installer` as lifecycle tooling.
 
 It gives the application a safe place to exist before any runtime mode is installed.
+
+The common configuration files (`config/citomni_cfg.php`, its environment overlays, `config/services.php` and `config/providers.php`) are scaffold of `citomni/kernel`, and the defensive `.htaccess` files in internal folders are scaffold of `citomni/http`. `citomni/installer` materializes them; see [Installation](#installation).
 
 ---
 
@@ -112,7 +112,71 @@ composer create-project citomni/app-skeleton my-app
 cd my-app
 ```
 
+### Configure scaffold placeholders
+
+Package scaffold stubs contain placeholders such as `{{APP_NAME}}`, and the installer stops on a placeholder without a value. Provide the values in `config/citomni_installer.php` before the first install. The file is app-owned and belongs in Git:
+
+```php
+<?php
+declare(strict_types=1);
+
+return [
+	'placeholders' => [
+		// citomni/kernel: config/citomni_cfg.php
+		'APP_NAME' => 'My App',
+		'LANGUAGE' => 'en',
+		'ICU_LOCALE' => 'en_US',
+		'TIMEZONE' => 'UTC',
+		'CHARSET' => 'UTF-8',
+		'OPERATOR_NAME' => 'Example Ltd.',
+		'OPERATOR_EMAIL' => 'hello@example.com',
+		'OPERATOR_URL' => 'https://www.example.com',
+		'PUBLIC_CONTACT_NAME' => 'Example Ltd.',
+		'PUBLIC_CONTACT_EMAIL' => 'hello@example.com',
+		'PUBLIC_CONTACT_PHONE' => '+45 12 34 56 78',
+		'PUBLIC_CONTACT_URL' => 'https://www.example.com/contact',
+		'TECHNICAL_SUPPORT_NAME' => 'Example Ltd.',
+		'TECHNICAL_SUPPORT_EMAIL' => 'support@example.com',
+		'TECHNICAL_SUPPORT_PHONE' => '+45 12 34 56 78',
+		'TECHNICAL_SUPPORT_URL' => 'https://www.example.com/support',
+		'DEVELOPER_NAME' => 'Example Ltd.',
+		'DEVELOPER_EMAIL' => 'dev@example.com',
+		'DEVELOPER_URL' => 'https://www.example.com',
+
+		// citomni/http (stage and prod config) and citomni/cli (stage and prod launcher)
+		'STAGE_ROOT_URL' => 'https://stage.example.com',
+		'PROD_ROOT_URL' => 'https://www.example.com',
+	],
+];
+```
+
+`STAGE_ROOT_URL` and `PROD_ROOT_URL` are base URLs without a trailing slash. `citomni/http` needs them already at install; `citomni/cli` needs them when the application switches to stage or prod. `STAGE_ROOT_HOST` and `PROD_ROOT_HOST` are derived from them and must not be set. A single run can override a value with `--placeholder=KEY=VALUE`.
+
+### Materialize the scaffold
+
+```bash
+composer citomni:install -- --environment=dev
+```
+
+Composer passes the arguments after `--` to the installer. The first install requires an explicit environment and covers every installed package: it records the environment, creates the common configuration files from `citomni/kernel`, and writes the `citomni/installer` block into `.gitignore`.
+
 At this point the application is intentionally neutral. It has no HTTP or CLI runtime mode yet.
+
+### Composer scripts
+
+The skeleton maps the installer commands to Composer scripts:
+
+```text
+composer citomni:doctor                          Validate environment, manifests, installer config and write access.
+composer citomni:status                          Report scaffold state. Read-only.
+composer citomni:install -- --environment=dev    Materialize scaffold for the recorded or a first environment.
+composer citomni:migrate -- --dry-run            Reconcile scaffold with current package sources.
+composer citomni:environment -- prod             Switch environment-aware files and the Composer posture.
+composer citomni:repair                          Recreate missing files from recorded state.
+composer citomni:sync                            Move package-managed scaffold to the current package baseline.
+```
+
+`citomni:install` has no default environment on purpose. Without `--environment` it fails instead of materializing dev files in a stage or production checkout. The scripts belong to the application; `citomni/installer` never edits `composer.json`.
 
 ---
 
@@ -122,20 +186,24 @@ Install the HTTP runtime package:
 
 ```bash
 composer require citomni/http
-composer citomni:install:http
+composer citomni:install -- --environment=dev
 ```
 
 Direct equivalent, if you do not use Composer scripts:
 
 ```bash
-vendor/bin/citomni-installer install --package=citomni/http
+vendor/bin/citomni-installer install --environment=dev
 ```
+
+Use the environment the application was installed with. Install creates the scaffold of newly added packages and leaves existing files alone; use `citomni:environment` to switch environments.
 
 This materializes HTTP-owned scaffold such as:
 
 ```text
+.htaccess
 public/index.php
 public/.htaccess
+public/robots.txt
 public/assets/.gitkeep
 public/uploads/.htaccess
 config/citomni_http_cfg.php
@@ -148,11 +216,12 @@ config/citomni_http_routes.stage.php
 config/citomni_http_routes.prod.php
 config/services_http.php
 src/Http/Controller/AppController.php
-templates/.htaccess
-templates/public/.gitkeep
+templates/public/maintenance.php.tpl
 templates/member/.gitkeep
 templates/admin/.gitkeep
 ```
+
+It also installs the deny-all `.htaccess` files in `bin/`, `config/`, `language/`, `src/`, `templates/`, `tests/` and `var/` (see [Security notes](#security-notes)).
 
 After this, point your web server document root to:
 
@@ -172,13 +241,13 @@ Install the CLI runtime package:
 
 ```bash
 composer require citomni/cli
-composer citomni:install:cli
+composer citomni:install -- --environment=dev
 ```
 
 Direct equivalent, if you do not use Composer scripts:
 
 ```bash
-vendor/bin/citomni-installer install --package=citomni/cli
+vendor/bin/citomni-installer install --environment=dev
 ```
 
 This materializes CLI-owned scaffold such as:
@@ -206,8 +275,7 @@ A combined application can install both modes:
 
 ```bash
 composer require citomni/http citomni/cli
-composer citomni:install:http
-composer citomni:install:cli
+composer citomni:install -- --environment=dev
 ```
 
 HTTP and CLI share the same app root, config folder, common cfg, providers, common services, source layers, language files, and runtime state folders.
@@ -243,25 +311,14 @@ A fresh `citomni/app-skeleton` project contains only the neutral app structure:
 
 ```text
 /app-root
-	/bin
-		/.htaccess
-
 	/config
-		/.htaccess
-		/citomni_cfg.php
-		/citomni_cfg.dev.php
-		/citomni_cfg.stage.php
-		/citomni_cfg.prod.php
 		/CONFIGURATION.md
-		/providers.php
-		/services.php
 
 	/language
 		/da
 			/.gitkeep
 		/en
 			/.gitkeep
-		/.htaccess
 
 	/src
 		/Enum
@@ -282,10 +339,6 @@ A fresh `citomni/app-skeleton` project contains only the neutral app structure:
 			/.gitkeep
 		/Util
 			/.gitkeep
-		/.htaccess
-
-	/tests
-		/.htaccess
 
 	/var
 		/backups
@@ -304,11 +357,9 @@ A fresh `citomni/app-skeleton` project contains only the neutral app structure:
 			/.gitkeep
 		/storage
 			/.gitkeep
-		/.htaccess
 
 	.gitattributes
 	.gitignore
-	.htaccess
 	composer.json
 	LICENSE
 	NOTICE
@@ -316,13 +367,24 @@ A fresh `citomni/app-skeleton` project contains only the neutral app structure:
 	TRADEMARKS.md
 ```
 
-Mode-specific folders such as `public/`, `templates/`, `src/Http/`, and `src/Cli/` are intentionally absent until their owning package is installed and materialized.
+The first install adds the common configuration files from `citomni/kernel`:
+
+```text
+config/citomni_cfg.php
+config/citomni_cfg.dev.php
+config/citomni_cfg.stage.php
+config/citomni_cfg.prod.php
+config/providers.php
+config/services.php
+```
+
+Mode-specific folders and files such as `public/`, `templates/`, `bin/`, `tests/`, `src/Http/`, `src/Cli/` and the defensive `.htaccess` files are intentionally absent until their owning package is installed and materialized.
 
 ---
 
 ## Configuration files
 
-The neutral skeleton provides the common app-level config entry points. Runtime packages may add mode-specific overlays when HTTP or CLI support is installed.
+The first install creates the common app-level config entry points from `citomni/kernel`. Runtime packages may add mode-specific overlays when HTTP or CLI support is installed. Once created, these files belong to the application.
 
 For the detailed merge contract, see [`config/CONFIGURATION.md`](config/CONFIGURATION.md).
 
@@ -486,20 +548,21 @@ The details of scaffold discovery, rendering, checksums, managed files, create-o
 
 ## Security notes
 
-This skeleton includes defensive `.htaccess` files in internal folders.
-
-Examples:
+`citomni/http` installs defensive `.htaccess` files in internal folders:
 
 ```text
 bin/.htaccess
 config/.htaccess
 language/.htaccess
 src/.htaccess
+templates/.htaccess
 tests/.htaccess
 var/.htaccess
 ```
 
 These files are defense-in-depth for shared hosting or misconfigured web roots. A correct HTTP deployment should still point the web server document root to `public/` after HTTP mode is installed.
+
+They are package-managed: the installer renders them per installation and the `citomni/installer` block keeps them out of Git, together with `public/index.php` and the other managed targets. A fresh checkout or a new server therefore runs `citomni:install` with its environment before it serves traffic. A neutral or CLI-only application has none of these files.
 
 Do not rely on `.htaccess` as the only security boundary. The correct public webroot is still the real fix. The `.htaccess` files are the airbag, not the steering wheel.
 
@@ -626,13 +689,25 @@ composer install
 
 Confirm that `citomni/installer` is required in `composer.json`.
 
+### `install requires --environment=<dev|stage|prod>`
+
+Pass the environment after `--`:
+
+```bash
+composer citomni:install -- --environment=dev
+```
+
+### `Unknown placeholder: {{APP_NAME}}`
+
+A scaffold stub needs a value that `config/citomni_installer.php` does not provide. Add the key named in the message; see [Configure scaffold placeholders](#configure-scaffold-placeholders).
+
 ### HTTP install did not create `public/`
 
 Confirm that `citomni/http` is installed, then materialize the HTTP scaffold:
 
 ```bash
 composer show citomni/http
-composer citomni:install:http
+composer citomni:install -- --environment=dev
 ```
 
 ### CLI install did not create `bin/citomni`
@@ -641,7 +716,7 @@ Confirm that `citomni/cli` is installed, then materialize the CLI scaffold:
 
 ```bash
 composer show citomni/cli
-composer citomni:install:cli
+composer citomni:install -- --environment=dev
 ```
 
 ### New PHP class is not found
