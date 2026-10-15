@@ -160,11 +160,7 @@ After this, point your web server document root to:
 public/
 ```
 
-For local development, you can use PHP's built-in server:
-
-```bash
-php -S 127.0.0.1:8000 -t public
-```
+Use a web server in development too. PHP's built-in server (`php -S`) is deliberately not supported.
 
 For the full scaffold lifecycle manual, see the [CitOmni Installer README](https://github.com/citomni/installer/blob/main/README.md).
 
